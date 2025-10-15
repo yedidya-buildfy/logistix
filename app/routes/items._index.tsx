@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, Link, useSearchParams } from "react-router";
+import { useLoaderData, Link, useSearchParams, useNavigate } from "react-router";
 import { Search } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -74,7 +74,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function ItemsIndex() {
   const { items, search } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const shop = searchParams.get("shop");
+
+  const handleRowClick = (itemId: string) => {
+    navigate(`/items/${itemId}${shop ? `?shop=${shop}` : ""}`);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex group/sidebar">
@@ -85,7 +90,7 @@ export default function ItemsIndex() {
           <p className="text-gray-400 italic">Manage your inventory items and versions</p>
         </div>
 
-          <div className="bg-neutral-900 rounded-lg shadow-sm border border-neutral-800 p-6">
+          <div className="bg-neutral-900 rounded-lg shadow-sm border-[1.5px] border-green-500/30 p-6">
             <div className="flex gap-4 mb-6">
               <form className="flex-1 flex gap-2" method="get">
                 <div className="relative flex-1">
@@ -124,7 +129,11 @@ export default function ItemsIndex() {
                   </TableRow>
                 ) : (
                   items.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:bg-neutral-800/50"
+                      onClick={() => handleRowClick(item.id)}
+                    >
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell className="text-right">
                         {formatNumber(item.totalUnits)}
@@ -133,7 +142,7 @@ export default function ItemsIndex() {
                         ${formatNumber(item.totalValue)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link to={`/items/${item.id}`}>
+                        <Link to={`/items/${item.id}${shop ? `?shop=${shop}` : ""}`}>
                           <Button variant="ghost" size="sm">
                             View
                           </Button>
