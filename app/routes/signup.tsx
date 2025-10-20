@@ -72,7 +72,7 @@ export default function Signup() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center mb-8">
-            <img src="/bright-logo.svg" alt="Logistix" className="size-16" />
+            <img src="/waving-bever.svg" alt="Logistix" className="size-16" />
             <span className="text-3xl font-semibold ml-3">LOGISTIX</span>
           </div>
 
@@ -95,7 +95,7 @@ export default function Signup() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center mb-8">
-          <img src="/bright-logo.svg" alt="Logistix" className="size-16" />
+          <img src="/waving-bever.svg" alt="Logistix" className="size-16" />
           <span className="text-3xl font-semibold ml-3">LOGISTIX</span>
         </div>
 

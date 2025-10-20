@@ -30,3 +30,29 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+
+// Helper to get user's active Shopify session
+export async function getUserShopifySession(userId: string, shop?: string) {
+  if (!shop) {
+    // If no shop specified, find any active session for this user
+    const session = await prisma.session.findFirst({
+      where: {
+        supabaseUserId: userId,
+      },
+      orderBy: {
+        expires: 'desc',
+      },
+    });
+    return session;
+  }
+
+  // Find session for specific shop
+  const session = await prisma.session.findFirst({
+    where: {
+      supabaseUserId: userId,
+      shop: shop,
+    },
+  });
+
+  return session;
+}

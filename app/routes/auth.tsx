@@ -90,7 +90,7 @@ export default function Auth() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-neutral-900 rounded-2xl shadow-2xl border border-green-500/30 p-8">
           <div className="flex items-center justify-center mb-6">
-            <img src="/bright-logo.svg" alt="Logistix" className="size-16" />
+            <img src="/waving-bever.svg" alt="Logistix" className="size-16" />
           </div>
           <h1 className="text-3xl font-normal text-white mb-4 text-center">Check your email</h1>
           <p className="text-gray-400 mb-6 text-center">
@@ -127,7 +127,17 @@ export default function Auth() {
               <div className="relative w-full h-full bg-gradient-to-br from-green-600 via-green-700 to-green-900 flex items-center justify-center p-12">
                 <div className="text-center space-y-6">
                   <div className="flex justify-center mb-6">
-                    <img src="/bright-logo.svg" alt="Logistix" className="size-20" />
+                    <img
+                      src={isSignUp ? "/waving-bever.svg" : "/bright-logo.svg"}
+                      alt="Logistix"
+                      className={[
+                        "size-20 transition-transform duration-500",
+                        isSignUp ? "animate-wave" : "",
+                      ].join(" ")}
+                      style={{
+                        transformOrigin: "bottom center",
+                      }}
+                    />
                   </div>
 
                   {!isSignUp ? (

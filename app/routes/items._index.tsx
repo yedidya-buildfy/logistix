@@ -15,11 +15,14 @@ import { formatNumber } from "../lib/utils";
 import { prisma } from "../db.server";
 import Sidebar from "../components/sidebar";
 import { requireUser } from "../lib/auth.server";
+import { getUserShopifySession } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { user, headers } = await requireUser(request);
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || "";
+
+  const shopifySession = await getUserShopifySession(user.id, user.shop || undefined);
 
   const items = await prisma.item.findMany({
     where: {
@@ -73,11 +76,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   });
 
-  return { items: itemsWithStats, search, user };
+  return {
+    items: itemsWithStats,
+    search,
+    user,
+    shopifyConnected: !!shopifySession,
+    shopifyShop: shopifySession?.shop || null,
+  };
 };
 
 export default function ItemsIndex() {
-  const { items, search, user } = useLoaderData<typeof loader>();
+  const { items, search, user, shopifyConnected, shopifyShop } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const handleRowClick = (itemId: string) => {
@@ -86,7 +95,11 @@ export default function ItemsIndex() {
 
   return (
     <div className="min-h-screen bg-black text-white flex group/sidebar">
-      <Sidebar user={user} />
+      <Sidebar
+        user={user}
+        shopifyConnected={shopifyConnected}
+        shopifyShop={shopifyShop}
+      />
       <main className="flex-1 p-8 pl-6">
         <div className="mb-8">
           <h1 className="text-4xl font-normal text-white mb-2">Items</h1>

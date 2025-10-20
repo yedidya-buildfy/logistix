@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate, Form } from "react-router";
 import {
   Package,
   Boxes,
@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   User as UserIcon,
   LogOut,
+  Link as LinkIcon,
+  CheckCircle,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "../lib/supabase.client";
 
@@ -22,9 +24,11 @@ interface SidebarProps {
     lastName?: string | null;
     shop?: string | null;
   };
+  shopifyConnected?: boolean;
+  shopifyShop?: string | null;
 }
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar({ user, shopifyConnected = false, shopifyShop }: SidebarProps) {
   const [pinned, setPinned] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const location = useLocation();
@@ -119,6 +123,54 @@ export default function Sidebar({ user }: SidebarProps) {
       </nav>
 
       <div className="absolute bottom-3 left-0 right-0 px-3 space-y-2">
+        {/* Shopify Connection Button */}
+        {user.shop && !shopifyConnected && (
+          <Form method="post" action="/shopify/connect">
+            <button
+              type="submit"
+              className={[
+                "w-full flex items-center gap-3 px-3 py-3 rounded-xl",
+                "bg-green-500/10 hover:bg-green-500/20 border border-green-500/30",
+                "text-green-400 hover:text-green-300",
+                "transition-all duration-200",
+              ].join(" ")}
+            >
+              <LinkIcon className="size-5 shrink-0" />
+              <span
+                className={[
+                  "text-sm font-medium transition-all duration-300",
+                  isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
+                ].join(" ")}
+              >
+                Connect Shopify
+              </span>
+            </button>
+          </Form>
+        )}
+
+        {shopifyConnected && (
+          <div
+            className={[
+              "w-full flex items-center gap-3 px-3 py-3 rounded-xl",
+              "bg-green-500/10 border border-green-500/30",
+              "text-green-400",
+            ].join(" ")}
+          >
+            <CheckCircle className="size-5 shrink-0" />
+            <div
+              className={[
+                "transition-all duration-300 overflow-hidden",
+                isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
+              ].join(" ")}
+            >
+              <p className="text-xs text-green-400/80">Connected</p>
+              <p className="text-sm font-medium truncate">
+                {shopifyShop || user.shop}
+              </p>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={handleLogout}
           className={[
