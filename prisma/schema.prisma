@@ -32,16 +32,18 @@ model Session {
 }
 
 model User {
-  id         String      @id @default(cuid())
-  shop       String      @unique
-  email      String?     @unique
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id        String   @id // Supabase auth user ID
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  shop      String? // Optional: for Shopify metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   warehouses Warehouse[]
   items      Item[]
 
-  @@index([shop])
+  @@index([email])
 }
 
 model Warehouse {

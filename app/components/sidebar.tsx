@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
   Package,
   Boxes,
@@ -9,13 +9,26 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  Store,
+  User as UserIcon,
+  LogOut,
 } from "lucide-react";
+import { getSupabaseBrowserClient } from "../lib/supabase.client";
 
-export default function Sidebar({ shop }: { shop?: string }) {
+interface SidebarProps {
+  user: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    shop?: string | null;
+  };
+}
+
+export default function Sidebar({ user }: SidebarProps) {
   const [pinned, setPinned] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const nav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -25,6 +38,16 @@ export default function Sidebar({ shop }: { shop?: string }) {
     { icon: ShoppingCart, label: "Products", href: "/products" },
     { icon: CreditCard, label: "Billings", href: "/billings" },
   ];
+
+  const handleLogout = async () => {
+    const supabase = getSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
+  const displayName = user.firstName && user.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user.email;
 
   const isExpanded = pinned || hovered;
 
@@ -95,19 +118,44 @@ export default function Sidebar({ shop }: { shop?: string }) {
         ))}
       </nav>
 
-      <div className="absolute bottom-3 left-0 right-0 px-3">
+      <div className="absolute bottom-3 left-0 right-0 px-3 space-y-2">
+        <button
+          onClick={handleLogout}
+          className={[
+            "w-full flex items-center gap-3 px-3 py-3 rounded-xl",
+            "bg-red-500/10 hover:bg-red-500/20 border border-red-500/30",
+            "text-red-400 hover:text-red-300",
+            "transition-all duration-200",
+          ].join(" ")}
+        >
+          <LogOut className="size-5 shrink-0" />
+          <span
+            className={[
+              "text-sm font-medium transition-all duration-300",
+              isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
+            ].join(" ")}
+          >
+            Sign Out
+          </span>
+        </button>
+
         <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-neutral-900/60 border border-neutral-800/40">
-          <Store className="size-5 shrink-0 text-green-500" />
+          <UserIcon className="size-5 shrink-0 text-green-500" />
           <div
             className={[
               "transition-all duration-300 overflow-hidden",
               isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
             ].join(" ")}
           >
-            <p className="text-xs text-neutral-400 mb-0.5">Shop</p>
+            <p className="text-xs text-neutral-400 mb-0.5">Account</p>
             <p className="text-sm text-white font-medium truncate">
-              {shop || "Not connected"}
+              {displayName}
             </p>
+            {user.shop && (
+              <p className="text-xs text-green-400 truncate mt-0.5">
+                {user.shop}
+              </p>
+            )}
           </div>
         </div>
       </div>

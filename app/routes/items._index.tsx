@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, Link, useSearchParams, useNavigate } from "react-router";
+import { useLoaderData, Link, useNavigate } from "react-router";
 import { Search } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -14,20 +14,25 @@ import {
 import { formatNumber } from "../lib/utils";
 import { prisma } from "../db.server";
 import Sidebar from "../components/sidebar";
+import { requireUser } from "../lib/auth.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { user, headers } = await requireUser(request);
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || "";
 
   const items = await prisma.item.findMany({
-    where: search
-      ? {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        }
-      : {},
+    where: {
+      userId: user.id,
+      ...(search
+        ? {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+    },
     include: {
       versions: {
         include: {
@@ -68,22 +73,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   });
 
-  return { items: itemsWithStats, search };
+  return { items: itemsWithStats, search, user };
 };
 
 export default function ItemsIndex() {
-  const { items, search } = useLoaderData<typeof loader>();
-  const [searchParams] = useSearchParams();
+  const { items, search, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const shop = searchParams.get("shop");
 
   const handleRowClick = (itemId: string) => {
-    navigate(`/items/${itemId}${shop ? `?shop=${shop}` : ""}`);
+    navigate(`/items/${itemId}`);
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex group/sidebar">
-      <Sidebar shop={shop || undefined} />
+      <Sidebar user={user} />
       <main className="flex-1 p-8 pl-6">
         <div className="mb-8">
           <h1 className="text-4xl font-normal text-white mb-2">Items</h1>
@@ -142,7 +145,7 @@ export default function ItemsIndex() {
                         ${formatNumber(item.totalValue)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link to={`/items/${item.id}${shop ? `?shop=${shop}` : ""}`}>
+                        <Link to={`/items/${item.id}`}>
                           <Button variant="ghost" size="sm">
                             View
                           </Button>
