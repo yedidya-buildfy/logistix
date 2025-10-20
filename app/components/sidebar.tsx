@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate, Form } from "react-router";
+import { Link, useLocation, useNavigate, useRevalidator } from "react-router";
 import {
   Package,
   Boxes,
@@ -13,6 +13,7 @@ import {
   LogOut,
   Link as LinkIcon,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "../lib/supabase.client";
 
@@ -31,8 +32,10 @@ interface SidebarProps {
 export default function Sidebar({ user, shopifyConnected = false, shopifyShop }: SidebarProps) {
   const [pinned, setPinned] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
+  const [connecting, setConnecting] = React.useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   const nav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -47,6 +50,42 @@ export default function Sidebar({ user, shopifyConnected = false, shopifyShop }:
     const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const handleConnectShopify = async () => {
+    setConnecting(true);
+    try {
+      const response = await fetch("/shopify/auth-url");
+      const data = await response.json();
+
+      if (data.authUrl) {
+        // Open Shopify OAuth in a new tab
+        const authWindow = window.open(data.authUrl, "_blank", "width=800,height=600");
+
+        // Poll for window close or check periodically
+        const checkInterval = setInterval(() => {
+          if (authWindow && authWindow.closed) {
+            clearInterval(checkInterval);
+            setConnecting(false);
+            // Revalidate to refresh connection status
+            revalidator.revalidate();
+          }
+        }, 1000);
+
+        // Also revalidate when this window regains focus
+        const handleFocus = () => {
+          revalidator.revalidate();
+          window.removeEventListener("focus", handleFocus);
+        };
+        window.addEventListener("focus", handleFocus);
+      } else {
+        setConnecting(false);
+        alert("Failed to initiate Shopify connection");
+      }
+    } catch (error) {
+      setConnecting(false);
+      alert("Error connecting to Shopify");
+    }
   };
 
   const displayName = user.firstName && user.lastName
@@ -125,27 +164,31 @@ export default function Sidebar({ user, shopifyConnected = false, shopifyShop }:
       <div className="absolute bottom-3 left-0 right-0 px-3 space-y-2">
         {/* Shopify Connection Button */}
         {user.shop && !shopifyConnected && (
-          <Form method="post" action="/shopify/connect">
-            <button
-              type="submit"
+          <button
+            onClick={handleConnectShopify}
+            disabled={connecting}
+            className={[
+              "w-full flex items-center gap-3 px-3 py-3 rounded-xl",
+              "bg-green-500/10 hover:bg-green-500/20 border border-green-500/30",
+              "text-green-400 hover:text-green-300",
+              "transition-all duration-200",
+              connecting ? "opacity-50 cursor-not-allowed" : "",
+            ].join(" ")}
+          >
+            {connecting ? (
+              <Loader2 className="size-5 shrink-0 animate-spin" />
+            ) : (
+              <LinkIcon className="size-5 shrink-0" />
+            )}
+            <span
               className={[
-                "w-full flex items-center gap-3 px-3 py-3 rounded-xl",
-                "bg-green-500/10 hover:bg-green-500/20 border border-green-500/30",
-                "text-green-400 hover:text-green-300",
-                "transition-all duration-200",
+                "text-sm font-medium transition-all duration-300",
+                isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
               ].join(" ")}
             >
-              <LinkIcon className="size-5 shrink-0" />
-              <span
-                className={[
-                  "text-sm font-medium transition-all duration-300",
-                  isExpanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[-8px]",
-                ].join(" ")}
-              >
-                Connect Shopify
-              </span>
-            </button>
-          </Form>
+              {connecting ? "Connecting..." : "Connect Shopify"}
+            </span>
+          </button>
         )}
 
         {shopifyConnected && (
